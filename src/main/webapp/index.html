@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>LIST</title>
+    <style type="text/css">
+    	.form-horizontal{
+    	padding:20px;
+    	}
+    </style>
+    <link rel="stylesheet" href="https://cdn.static.runoob.com/libs/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://cdn.static.runoob.com/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://cdn.static.runoob.com/libs/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <div>
+        <div class="form-horizontal" role="form">
+            <div class="form-group col-sm-6">
+                <label for="title" class="col-sm-2 control-label">Title</label>
+                <div class="col-sm-8">
+                    <input type="text" class="form-control" id="title" placeholder="请输入title">
+                </div>
+            </div>
+            <div class="form-group col-sm-6">
+                <label for="film_id" class="col-sm-2 control-label">ID</label>
+                <div class="col-sm-8">
+                    <input type="text" class="form-control" id="film_id" placeholder="请输入ID">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-offset-1 col-sm-6 col-sm-pull-1 text-right">
+                    <button id="query" class="btn btn-info">查询</button>
+                     <a href="insert.html" class="btn btn-primary btn-default" role="button">新增</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div>
+        <table id="userTable" class="table table-striped">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Language</th>
+                <th>编&nbsp;&nbsp;辑</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+        </table>
+    </div>
+    <div>
+       
+            
+				<ul class="pagination" id="pagination" class="pagination col-sm-5" style="margin:0">
+				    <li><a href="#">&laquo;</a></li>
+				    
+				    <li><a href="#">&raquo;</a></li>
+				</ul>
+            
+           
+<div class="col-sm-1">   本页显示</div>
+        <div class="col-sm-1">
+ 
+            <select id="pageSize"  class="form-control">
+                
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option> 
+            </select>
+           
+        </div>
+<div class="col-sm-1">  条</div>
+       
+
+    <script id="rowTemplate" type="application/html">
+        <tr>
+            <td></td><td></td><td></td><td></td><td></td>
+        </tr>
+
+    </script>
+    
+  
+
+    <script>
+        $('document').ready(function () {
+            window.page = {
+                page: 1,
+                pageSize: Number($('#pageSize').val()),
+                total: 0,
+                totalPage: 0
+            }; 
+            query(page);
+            $('#query').click(function () {
+            	console.log("******************************"+$('#title').html());
+                query({
+                	title: $('#title').val(),
+                	film_id: $('#film_id').val()
+                });
+            });
+
+            $('#pagination').children('li:first').click(function() {
+                window.page.page = 1;
+                query(window.page);
+            });
+
+            $('#pagination').children('li:last').click(function() {
+            	console.log(window.page.totalPage);
+                window.page.page = window.page.totalPage;
+                query(window.page);
+            });
+
+            $('#pageSize').change(function() {
+                window.page.page = 1;
+                window.page.pageSize = Number($('#pageSize').val());
+                window.page.title = $('#title').val();
+                window.page.film_id = $('#film_id').val();
+                query(window.page);
+            });
+
+            $('#go').click(function() {
+                window.page.page = Number($('#page').val());
+                query(window.page);
+            });
+        });
+
+
+ 
+      /*    function resetPage(page) {
+             window.page.total = page.total;
+             window.page.page = page.page;
+             window.page.pageSize = page.pageSize;
+             window.page.totalPage  = Math.ceil(page.total/window.page.pageSize);
+         } 
+ */
+        //刷新分页按钮
+         function refreshPagination() {
+            $('#pagination').children('li.page').remove();
+            var pages = [];
+            if (window.page.totalPage - window.page.page < 2) {
+                pages = range(Math.max(1,window.page.totalPage-4),window.page.totalPage)
+            } else if (window.page.page -1 < 2) {
+                pages = range(1, Math.min(window.page.totalPage,5))
+            } else {
+                pages =  range(Number(window.page.page)-2,Number(window.page.page)+2);
+            }
+            var template = "<li class='page'><a href='#'></a></li>"
+            for (var item of pages) {
+                var $first = $("#pagination").children('li:last');
+                var $template = $(template);
+                $template.children('a').text(item);
+                if (item == window.page.page) {
+                    $template.addClass('active');
+                }
+                $first.before($template);
+            }
+            $("#pagination").children('li:first').removeClass('disabled');
+            $('#pagination').children('li:last').removeClass('disabled');
+            if (window.page.page == 1) {
+                $("#pagination").children('li:first').addClass('disabled');
+            }
+            if (window.page.page == page.totalPage) {
+                $("#pagination").children('li:last').addClass('disabled');
+            }
+
+            $("#pagination li.page").click(function(event) {
+                console.log(event);
+                window.page.page = Number($(event.target).text());
+                query(window.page)
+            });
+        };
+ 
+
+        function range(min,max) {
+            var arr = [];
+            for (var i=min ;i <= max; i++) {
+                arr.push(i);
+            }
+            return arr;
+        }
+
+        function query(queryInfo) {
+            var defaultArg = {
+          		title: "",
+          		film_id: "",
+                page: 1,
+                pageSize: 10
+            };
+            //将defaultArg, queryInfo合并
+            queryInfo = $.extend({}, defaultArg, queryInfo);
+            $.ajax({
+                url: "first",
+                type: "GET",
+                dataType: "json",
+                data: queryInfo,
+                success: function (data) {
+ //                    total rows;
+                    window.page.totalPage = Math.ceil(data.total/window.page.pageSize);
+ //                   resetPage(queryInfo);
+                    $('#userTable tbody').empty();
+                    for (var item of data.rows) {
+                        var $template = $($('#rowTemplate').html()).clone();
+                        $template.children('td').eq(0).text(item.film_id);
+                        $template.children('td').eq(1).text(item.title);
+                        $template.children('td').eq(2).text(item.description);
+                        $template.children('td').eq(3).text(item.name);
+                       /*  var $buttonTem = $($('#buttonTemplate').html()).clone();
+                        $template.children('td').eq(4).append($buttonTem); */
+                        $template.children('td').eq(4).html("<a href='delete?id="+item.film_id+"'>删除</a>");
+                        $template.children('td').eq(4).append("&nbsp;&nbsp;");
+                        $template.children('td').eq(4).append("<a href='update.html?id="+item.film_id+"'>更新</a>");
+                        $('#userTable').append($template);
+                    }
+                    $('#page').attr('max',window.page.totalPage);
+                    $('#page').val(queryInfo.page);
+                    refreshPagination();
+                }
+            })
+        }
+    </script>
